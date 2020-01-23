@@ -20,7 +20,7 @@ def vectorize_texts(tokenized_texts, word2id, word2freq, mode='tfidf', scale=Tru
 
     # получаем вектора относительных частот слова в документе
     elif mode == 'tf':
-        result = result.tocsr() # csr обеспечивает эффективные операции над строками матрицы
+        result = result.tocsr()
         result = result.multiply(1 / result.sum(1))
 
     # полностью убираем информацию о количестве употреблений слова в данном документе,
@@ -36,14 +36,13 @@ def vectorize_texts(tokenized_texts, word2id, word2freq, mode='tfidf', scale=Tru
         result = result.multiply(1 / word2freq)  # разделить каждый столбец на вес слова
     
     # почему не standard scaler?
-    # матрица весов разреженная, если сдвинем ее на мат. ожидание, потеряем разреженность => скорее всего даже в память не влезет
+    # матрица весов разреженная, если сдвинем ее на мат. ожидание, потеряем разреженность
+    # => скорее всего даже в память не влезет
     if scale:
         result = result.tocsc()
         result -= result.min()
         result /= (result.max() + 1e-6)
 
-    # алгоритмы, которые мы дальше будем использовать, читают документы один за другим
-    # следовательно, важна эффективная работа со строками матрицы
     return result.tocsr()
 
 
@@ -56,9 +55,6 @@ class SparseFeaturesDataset(Dataset):
         return self.features.shape[0]
 
     def __getitem__(self, idx):
-        # self.features - разреженная матрица, pytorch с ними работать не умеет
-        # с другой стороны, не хотим конвертировать всю матрицу датасета в плотное представление
-        # => построчно конвертируем в numpy
         cur_features = torch.from_numpy(self.features[idx].toarray()[0]).float()
         cur_label = torch.from_numpy(np.asarray(self.targets[idx])).long()
         return cur_features, cur_label
