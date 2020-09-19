@@ -6,6 +6,9 @@ from .base import tokenize_corpus
 
 
 def pos_corpus_to_tensor(sentences, char2id, label2id, max_sent_len, max_token_len):
+    # к max_token_len добавляем 2, чтобы отличать начало и конец токена (в начале и конце токена будет стоять 0)
+    # Для определения части речи в русском языке конец слова (окончания и суффиксы) важнее, чем середина и начало слова,
+    # а одна и та же последовательность символов может быть как частью суффикса, так и частью приставки
     inputs = torch.zeros((len(sentences), max_sent_len, max_token_len + 2), dtype=torch.long)
     targets = torch.zeros((len(sentences), max_sent_len), dtype=torch.long)
 
